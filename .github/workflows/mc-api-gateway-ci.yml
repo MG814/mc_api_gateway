@@ -50,7 +50,7 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     - name: Run Bandit
       run: | 
-        bandit -c bandit.yaml -r src
+        bandit -r src
     - name: Run Ruff
       run: |
         ruff src

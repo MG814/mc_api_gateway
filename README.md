@@ -1,0 +1,1 @@
+[![codecov](https://codecov.io/github/MG814/mc_api_gateway/graph/badge.svg?token=1087Q2Q1SN)](https://codecov.io/github/MG814/mc_api_gateway)
