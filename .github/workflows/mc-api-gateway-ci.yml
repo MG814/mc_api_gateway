@@ -1,0 +1,60 @@
+name: API Gateway CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.12']
+
+#    services: # TODO Uncomment when are needed.
+#      postgres:
+#        image: postgres
+#        env:
+#          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+#          POSTGRES_USER: ${{ vars.DB_USER }}
+#          POSTGRES_DB: ${{ vars.DB_NAME }}
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
+#        ports:
+#          - 5432:5432
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r src/requirements.txt
+    - name: Run Tests
+      run: |
+        cd src
+        coverage run manage.py test
+        coverage report
+        coverage xml
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    - name: Run Bandit
+      run: | 
+        bandit -c bandit.yaml -r src
+    - name: Run Safety
+      run: |
+        safety check
+      continue-on-error: true
+    - name: Run Ruff
+      run: |
+        ruff src
