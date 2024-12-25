@@ -22,7 +22,7 @@ class MedicalRecordsGatewayViewSet(GenericViewSet):
             return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(data, status=response.status_code)
-# Update
+
     @action(methods=['GET'], detail=False, url_path='patients/(?P<patient_id>\d+)/records')
     def get_records(self, request, patient_id=None):
         token = get_token(request)
@@ -42,7 +42,7 @@ class MedicalRecordsGatewayViewSet(GenericViewSet):
                 return Response(data, status=response.status_code)
         else:
             return Response({'detail': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
-# Update
+
     def retrieve(self, request, pk=None):
         token = get_token(request)
 
@@ -62,18 +62,17 @@ class MedicalRecordsGatewayViewSet(GenericViewSet):
                 return Response(data, status=response.status_code)
         return Response({'detail': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-# Update
     def create(self, request):
         token = get_token(request)
 
         token_data = verify_token(token)
 
         current_user_role = token_data.get('current_user_role')
-        visits_service_url = 'http://web-medical-records:8300/'
-        visit_response = forward_request_to_service(visits_service_url, request.data, token, role=current_user_role,
+        service_url = 'http://web-medical-records:8300/'
+        response = forward_request_to_service(service_url, request.data, token, role=current_user_role,
                                                     method='post')
 
-        if visit_response.status_code == status.HTTP_201_CREATED:
-            return Response(visit_response.json(), status=status.HTTP_201_CREATED)
+        if response.status_code == status.HTTP_201_CREATED:
+            return Response(response.json(), status=status.HTTP_201_CREATED)
         else:
-            return Response(visit_response.json(), status=visit_response.status_code)
+            return Response(response.json(), status=response.status_code)

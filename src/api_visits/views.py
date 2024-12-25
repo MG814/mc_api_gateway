@@ -13,7 +13,7 @@ class VisitGatewayViewSet(GenericViewSet):
         token_data = verify_token(token)
 
         user_id = token_data.get('current_user_id')
-        role = token_data.get('role')
+        role = token_data.get('current_user_role')
 
         service_url = f'http://web-visits:8600/visits/patient/{patient_id}/'
         response = forward_request_to_service(service_url, token=token, method='get')
@@ -44,13 +44,7 @@ class VisitGatewayViewSet(GenericViewSet):
             return Response(data, status=response.status_code)
 
     def retrieve(self, request, pk=None):
-        auth_header = request.META.get('HTTP_AUTHORIZATION', None)
-
-        if auth_header and auth_header.startswith('Bearer '):
-            token = auth_header.split(' ')[1]
-        else:
-            return Response({'error': 'Authorization header missing or invalid'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+        token = get_token(request)
 
         token_data = verify_token(token)
         user_id = token_data.get('current_user_id')
@@ -114,23 +108,7 @@ class DoctorAvailabilityGatewayViewSet(GenericViewSet):
 
         verify_token(token)
 
-        service_url = f'http://web-visits:8600/doctor-availabilities/doctor/{doctor_id}/'
-        response = forward_request_to_service(service_url, token=token, method='get')
-        data = response.json()
-
-        if response.status_code == status.HTTP_200_OK:
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            return Response(data, status=response.status_code)
-
-    @action(methods=['GET'], detail=False, url_path='doctors/my/availabilities')
-    def get_login_doctor_availabilities(self, request):
-        token = get_token(request)
-
-        token_data = verify_token(token)
-        user_id = token_data.get('current_user_id')
-
-        service_url = f'http://web-visits:8600/doctor-availabilities/doctor/{user_id}/'
+        service_url = f'http://web-visits:8600/doctor-availabilities/doctors/{doctor_id}/'
         response = forward_request_to_service(service_url, token=token, method='get')
         data = response.json()
 

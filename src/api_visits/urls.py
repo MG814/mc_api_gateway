@@ -6,7 +6,4 @@ router = routers.SimpleRouter()
 router.register('visits', VisitGatewayViewSet, basename='visit')
 router.register('doctor-availabilities', DoctorAvailabilityGatewayViewSet, basename='availability')
 
-
-urlpatterns = [
-]
-urlpatterns += router.urls
+urlpatterns = router.urls

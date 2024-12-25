@@ -3,8 +3,6 @@ from .views import MedicalRecordsGatewayViewSet
 from rest_framework import routers
 
 router = routers.SimpleRouter()
-router.register('', MedicalRecordsGatewayViewSet, basename='create-visit')
+router.register('', MedicalRecordsGatewayViewSet, basename='medical-records')
 
-urlpatterns = [
-]
-urlpatterns += router.urls
+urlpatterns = router.urls

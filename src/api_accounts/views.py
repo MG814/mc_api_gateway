@@ -30,7 +30,7 @@ class LoginGatewayView(GenericViewSet):
         if not username or not password:
             return JsonResponse({'error': 'Missing username or password'}, status=400)
 
-        response = requests.post(accounts_url, json=login_data)
+        response = forward_request_to_service(accounts_url, login_data, method='POST')
 
         return JsonResponse(response.json(), status=response.status_code)
 
@@ -51,8 +51,7 @@ class RegisterGatewayView(GenericViewSet):
 
         accounts_url = 'http://web-accounts:8100/register/'
 
-        response = forward_request_to_service(accounts_url, register_data, method='POST')
-
+        response = forward_request_to_service(accounts_url, register_data, method='post')
         return JsonResponse(response.json(), status=response.status_code)
 
 
@@ -78,7 +77,6 @@ class UserAddressGatewayView(GenericViewSet):
         token = get_token(request)
         token_data = verify_token(token)
         user_id = token_data.get('current_user_id')
-# Do mikroserwisu accounts
         address_url = f'http://web-accounts:8100/address/{pk}/'
         address_response = forward_request_to_service(address_url, token=token, method='get')
 
