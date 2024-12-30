@@ -1,0 +1,2 @@
+from .address import AddressGatewayViewTests
+from .authentication import AuthenticationGatewayViewTests

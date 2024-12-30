@@ -6,7 +6,7 @@ from django.urls import reverse
 from unittest.mock import patch
 
 
-class VisitsGatewayViewTests(APITestCase):
+class DoctorAvailabilityGatewayViewTests(APITestCase):
     def setUp(self) -> None:
         self.doctor_availability_url = reverse("availability-list")
         self.doctor_availability_url_get = reverse("availability-get-doctor-availabilities", kwargs={"doctor_id": 1})

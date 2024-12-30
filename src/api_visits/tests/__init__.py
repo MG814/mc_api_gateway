@@ -1,0 +1,2 @@
+from .availability import DoctorAvailabilityGatewayViewTests
+from .visit import VisitsGatewayViewTests
