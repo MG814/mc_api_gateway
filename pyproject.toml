@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "MC API GATEWAY"
+version = "0.1.0"
+description = ""
+authors = ["MICHAŁ"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+bandit = "1.7.9"
+coverage = "7.6.1"
+cryptography = "43.0.1"
+django-extensions = "3.2.3"
+Django = "5.1"
+djangorestframework = "3.15.2"
+djangorestframework-simplejwt = "5.3.1"
+Jinja2 = "3.1.4"
+psutil = "6.0.0"
+PyJWT = "2.10.1"
+pytest = "^7.0"
+PyYAML = "6.0.2"
+requests = "2.32.3"
+responses = "0.25.3"
+ruff = "0.6.3"
+sqlparse = "0.5.1"
+tzdata = "2024.1"
+python = "^3.13"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
