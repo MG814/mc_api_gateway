@@ -42,6 +42,15 @@ INSTALLED_APPS = [
     'django_extensions',
 ]
 
+INSTALLED_EXTENSION = [
+    'api_accounts',
+    'api_medical_records',
+    'api_token_jwt',
+    'api_visits',
+]
+
+INSTALLED_APPS += INSTALLED_EXTENSION
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -125,3 +134,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH0_DOMAIN = "dev-s3wwpz0aeo4ffn13.us.auth0.com"
+AUTH0_CLIENT_ID = "8vQCg32VuBvhl83V6RkL8Sfwtbsp8LiI"
+AUTH0_CLIENT_SECRET = "bq5AyY60JJ3OGadYSs5cpFdnrLU6qa4Ljxa_uGm4_AZSMeEGfDhFudRO61FIvQD5"
+AUTH0_CALLBACK_URL = "http://127.0.0.1:8000/api/v4/callback/"
+AUTH0_AUDIENCE = "https://dev-s3wwpz0aeo4ffn13.us.auth0.com/api/v2/"
+LOGOUT_REDIRECT_URL = "http://127.0.0.1:8100/admin/"

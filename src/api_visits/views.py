@@ -7,13 +7,13 @@ from utils.support_functions import verify_token, forward_request_to_service, ge
 
 
 class VisitGatewayViewSet(GenericViewSet):
-    @action(methods=['GET'], detail=False, url_path='patients/(?P<patient_id>\d+)/visits')
+    @action(methods=['GET'], detail=False, url_path='patients/(?P<patient_id>[\w\-|]+)')
     def get_patient_visits(self, request, patient_id=None):
         token = get_token(request)
         token_data = verify_token(token)
 
-        user_id = token_data.get('current_user_id')
-        role = token_data.get('current_user_role')
+        user_id = token_data.get('https://user-info/user_id')
+        role = token_data.get('https://user-info/role')
 
         service_url = f'http://web-visits:8600/visits/patient/{patient_id}/'
         response = forward_request_to_service(service_url, token=token, method='get')
@@ -27,27 +27,11 @@ class VisitGatewayViewSet(GenericViewSet):
         else:
             return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    @action(methods=['GET'], detail=False, url_path='patients/my/visits')
-    def get_login_user_visits(self, request):
-        token = get_token(request)
-
-        token_data = verify_token(token)
-        user_id = token_data.get('current_user_id')
-
-        service_url = f'http://web-visits:8600/visits/patient/{user_id}/'
-        response = forward_request_to_service(service_url, token=token, method='get')
-        data = response.json()
-
-        if response.status_code == status.HTTP_200_OK:
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            return Response(data, status=response.status_code)
-
     def retrieve(self, request, pk=None):
         token = get_token(request)
 
         token_data = verify_token(token)
-        user_id = token_data.get('current_user_id')
+        user_id = token_data.get('https://user-info/user_id')
 
         service_url = f'http://web-visits:8600/visits/{pk}/'
         response = forward_request_to_service(service_url, token=token, method='get')
@@ -66,7 +50,7 @@ class VisitGatewayViewSet(GenericViewSet):
         token = get_token(request)
         token_data = verify_token(token)
 
-        current_user_role = token_data.get('current_user_role')
+        current_user_role = token_data.get('https://user-info/role')
 
         service_url = 'http://web-visits:8600/visits/'
         response = forward_request_to_service(service_url, request.data, token, role=current_user_role, method='post')
@@ -85,7 +69,7 @@ class VisitGatewayViewSet(GenericViewSet):
         token = get_token(request)
         token_data = verify_token(token)
 
-        current_user_role = token_data.get('current_user_role')
+        current_user_role = token_data.get('https://user-info/role')
         visits_service_url = f'http://web-visits:8600/visits/delete/{pk}/'
         visit_response = forward_request_to_service(visits_service_url, token, role=current_user_role, method='delete')
 
@@ -137,13 +121,14 @@ class DoctorAvailabilityGatewayViewSet(GenericViewSet):
 
         token_data = verify_token(token)
 
-        current_user_role = token_data.get('current_user_role')
-        user_id = token_data.get('current_user_id')
+        current_user_role = token_data.get('https://user-info/role')
+        user_id = token_data.get('https://user-info/user_id')
 
         service_url = 'http://web-visits:8600/doctor-availabilities/'
-        response = forward_request_to_service(service_url, request.data, token, role=current_user_role, method='post')
 
         if user_id == request.data.get('doctor_id'):
+            response = forward_request_to_service(service_url, request.data, token, role=current_user_role,
+                                                  method='post')
             if response.status_code == status.HTTP_201_CREATED:
                 return Response(response.json(), status=status.HTTP_201_CREATED)
             else:
@@ -155,12 +140,12 @@ class DoctorAvailabilityGatewayViewSet(GenericViewSet):
     def update_availabilities(self, request, pk=None):
         token = get_token(request)
         token_data = verify_token(token)
-        user_id = token_data.get('current_user_id')
+        user_id = token_data.get('https://user-info/user_id')
 
         service_url = f'http://web-visits:8600/doctor-availabilities/{pk}/'
-        response = forward_request_to_service(service_url, data=request.data, token=token, method='patch')
 
         if user_id == request.data.get('doctor_id'):
+            response = forward_request_to_service(service_url, data=request.data, token=token, method='patch')
             if response.status_code == status.HTTP_200_OK:
                 return Response({'message': 'Doctor availabilities updated successfully'}, status=status.HTTP_200_OK)
             else:

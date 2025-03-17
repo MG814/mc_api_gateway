@@ -1,30 +1,50 @@
-import requests
 from rest_framework.response import Response
 from rest_framework import status
+import requests
+import jwt
+from jwt.algorithms import RSAAlgorithm
+from django.conf import settings
+
+
+def get_auth0_public_key(token):
+    jwks_url = f"https://{settings.AUTH0_DOMAIN}/.well-known/jwks.json"
+    response = requests.get(jwks_url)
+    jwks = response.json()
+
+    unverified_header = jwt.get_unverified_header(token)
+    token_kid = unverified_header.get('kid')
+
+    key = None
+    for k in jwks["keys"]:
+        if k.get("kid") == token_kid:
+            key = k
+            break
+
+    if key is None:
+        raise Exception("Nie znaleziono klucza o odpowiednim kid w JWKS.")
+
+    public_key = RSAAlgorithm.from_jwk(key)
+    return public_key
 
 
 def verify_token(token):
-    """
-    Funkcja do weryfikacji tokena JWT w mikroserwisie accounts.
-    Zwraca dane użytkownika, jeśli token jest prawidłowy.
-    """
-    verify_token_url = 'http://web-accounts:8100/users/verify-token/'
-    headers = {'Authorization': f'Bearer {token}'}
-
     try:
-        response = requests.get(verify_token_url, headers=headers)
-        if response.status_code == status.HTTP_200_OK:
-            return response.json()
-        else:
-            return Response({'error': 'Token verification failed'}, status=status.HTTP_401_UNAUTHORIZED)
-    except requests.exceptions.RequestException:
-        return Response({'error': 'Service unavailable'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        public_key = get_auth0_public_key(token)
+        payload = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=settings.AUTH0_AUDIENCE,
+            issuer=f"https://{settings.AUTH0_DOMAIN}/"
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise Exception("Token expired")
+    except jwt.InvalidTokenError as e:
+        raise Exception("Invalid token: " + str(e))
 
 
 def forward_request_to_service(url, data=None, token=None, role=None, method=None):
-    """
-    Funkcja do przekazywania żądań do mikroserwisów obsługująca różne typy żądań HTTP.
-    """
     headers = {}
     if token:
         headers['Authorization'] = f'Bearer {token}'
@@ -32,7 +52,6 @@ def forward_request_to_service(url, data=None, token=None, role=None, method=Non
         headers['role'] = role
 
     try:
-        # Sprawdź, który typ żądania wykonać
         if method.lower() == 'get':
             response = requests.get(url, headers=headers, params=data)
         elif method.lower() == 'post':
@@ -53,7 +72,6 @@ def forward_request_to_service(url, data=None, token=None, role=None, method=Non
 
 
 def get_token(request):
-    # Pobieramy token JWT z nagłówka Authorization
     auth_header = request.META.get('HTTP_AUTHORIZATION', None)
 
     if auth_header and auth_header.startswith('Bearer '):
@@ -62,3 +80,17 @@ def get_token(request):
 
     return Response({'error': 'Authorization header missing or invalid'},
                     status=status.HTTP_401_UNAUTHORIZED)
+
+
+def get_management_token():
+    token_url = f"https://{settings.AUTH0_DOMAIN}/oauth/token"
+    payload = {
+        "grant_type": "client_credentials",
+        "client_id": settings.AUTH0_CLIENT_ID,
+        "client_secret": settings.AUTH0_CLIENT_SECRET,
+        "audience": f"https://{settings.AUTH0_DOMAIN}/api/v2/"
+    }
+    response = requests.post(token_url, json=payload)
+    response.raise_for_status()
+    data = response.json()
+    return data.get("access_token")
