@@ -47,6 +47,7 @@ INSTALLED_EXTENSION = [
     'api_medical_records',
     'api_token_jwt',
     'api_visits',
+    'api_statistic',
 ]
 
 INSTALLED_APPS += INSTALLED_EXTENSION
@@ -138,6 +139,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH0_DOMAIN = "dev-s3wwpz0aeo4ffn13.us.auth0.com"
 AUTH0_CLIENT_ID = "8vQCg32VuBvhl83V6RkL8Sfwtbsp8LiI"
 AUTH0_CLIENT_SECRET = "bq5AyY60JJ3OGadYSs5cpFdnrLU6qa4Ljxa_uGm4_AZSMeEGfDhFudRO61FIvQD5"
-AUTH0_CALLBACK_URL = "http://127.0.0.1:8000/api/v4/callback/"
+AUTH0_CALLBACK_URL = "http://127.0.0.1:8000/api/callback/"
 AUTH0_AUDIENCE = "https://dev-s3wwpz0aeo4ffn13.us.auth0.com/api/v2/"
 LOGOUT_REDIRECT_URL = "http://127.0.0.1:8100/admin/"
+
+ACCOUNTS_SERVICE_URL = "http://web-accounts:8100"
+VISITS_SERVICE_URL = "http://web-visits:8600"
+MEDICAL_RECORDS_SERVICE_URL = "http://web-medical-records:8300"
+PAYMENTS_SERVICE_URL = "http://web-payments:8500"
+TOKEN_URL = "https://user-info"
