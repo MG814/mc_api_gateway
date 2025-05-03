@@ -1,10 +1,12 @@
 from django.urls import path
 from rest_framework import routers
-from .views import LoginGatewayView, RegisterGatewayView, UserAddressGatewayView, LogoutView, UpdateUserGatewayView
+from .views import (LoginGatewayView, RegisterGatewayView, UserAddressGatewayView, LogoutView, UpdateUserGatewayView,
+                    UserGatewayView)
 
 router = routers.SimpleRouter()
 router.register('patients/addresses', UserAddressGatewayView, basename='address')
 router.register('update', UpdateUserGatewayView, basename='update-user')
+router.register('details', UserGatewayView, basename='user-detail')
 
 urlpatterns = [
     path("login/", LoginGatewayView.as_view(), name="auth0-login"),

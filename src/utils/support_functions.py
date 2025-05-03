@@ -35,7 +35,9 @@ def verify_token(token):
             public_key,
             algorithms=["RS256"],
             audience=settings.AUTH0_AUDIENCE,
-            issuer=f"https://{settings.AUTH0_DOMAIN}/"
+            issuer=f"https://{settings.AUTH0_DOMAIN}/",
+            options={"verify_iat": True},
+            leeway=10
         )
         return payload
     except jwt.ExpiredSignatureError:
