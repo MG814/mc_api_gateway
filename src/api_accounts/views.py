@@ -78,42 +78,28 @@ class UserAddressGatewayView(GenericViewSet):
     def retrieve(self, request, pk=None):
         token = get_token(request)
 
-        token_data = verify_token(token)
-        user_id = token_data.get('sub')
+        verify_token(token)
 
         address_service_url = f'{ACCOUNTS_SERVICE_URL}/address/{pk}/'
         address_response = forward_request_to_service(address_service_url, token=token, method='get')
         address_data = address_response.json()
 
-        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{address_data.get('user')}/"
-        response = forward_request_to_service(url=accounts_url, method='get')
-
-        if user_id == response.json().get('auth0_id'):
-            if address_response.status_code == status.HTTP_200_OK:
-                return Response(address_data, status=status.HTTP_200_OK)
-            else:
-                return Response(status=address_response.status_code)
+        if address_response.status_code == status.HTTP_200_OK:
+            return Response(address_data, status=status.HTTP_200_OK)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response(status=address_response.status_code)
+
 
     @action(methods=['PATCH'], detail=True, url_path='update')
     def update_user_address(self, request, pk=None):
         token = get_token(request)
-        token_data = verify_token(token)
-        user_id = token_data.get(f'{TOKEN_URL}/user_id')
+        verify_token(token)
 
         address_url = f'{ACCOUNTS_SERVICE_URL}/address/{pk}/'
         address_response = forward_request_to_service(address_url, token=token, method='get')
-        address_data = address_response.json()
-
-        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{address_data.get('user')}/"
-        response = forward_request_to_service(url=accounts_url, method='get')
 
         if address_response.status_code != status.HTTP_200_OK:
             return Response({'message': 'Address not found or not accessible'}, status=status.HTTP_404_NOT_FOUND)
-
-        if response.json().get('auth0_id') != user_id:
-            return Response({'message': 'Unauthorized to update this address'}, status=status.HTTP_403_FORBIDDEN)
 
         update_response = forward_request_to_service(address_url, request.data, token, method='patch')
 
@@ -125,22 +111,14 @@ class UserAddressGatewayView(GenericViewSet):
     def create(self, request, *args, **kwargs):
         token = get_token(request)
 
-        token_data = verify_token(token)
+        verify_token(token)
 
-        user_id = token_data.get(f'{TOKEN_URL}/user_id')
         user_service_url = f'{ACCOUNTS_SERVICE_URL}/address/'
 
         address_response = forward_request_to_service(url=user_service_url, data=request.data, token=token,
                                                       method='post')
         address_data = address_response.json()
-
-        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{request.data.get('user')}/"
-        response = forward_request_to_service(url=accounts_url, method='get')
-
-        if user_id == response.json().get('auth0_id'):
-            if address_response.status_code == status.HTTP_200_OK:
-                return Response(address_data, status=status.HTTP_200_OK)
-            else:
-                return Response(address_data, status=address_response.status_code)
+        if address_response.status_code == status.HTTP_200_OK:
+            return Response(address_data, status=status.HTTP_200_OK)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response(address_data, status=address_response.status_code)
