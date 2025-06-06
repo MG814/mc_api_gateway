@@ -9,7 +9,7 @@ from core.settings import VISITS_SERVICE_URL, PAYMENTS_SERVICE_URL, TOKEN_URL, A
 
 
 class VisitGatewayViewSet(GenericViewSet):
-    @action(methods=['GET'], detail=False, url_path='patients/(?P<patient_id>[\w\-|]+)')
+    @action(methods=['GET'], detail=False, url_path='patients/(?P<patient_id>[\w\-]+)')
     def get_patient_visits(self, request, patient_id=None):
         token = get_token(request)
         token_data = verify_token(token)
@@ -21,7 +21,11 @@ class VisitGatewayViewSet(GenericViewSet):
         response = forward_request_to_service(service_url, token=token, method='get')
         data = response.json()
 
-        if patient_id == user_id or role == 'Doctor':
+        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{patient_id}/"
+        response = forward_request_to_service(url=accounts_url, method='get')
+        patient_auth0_id = response.json().get('auth0_id')
+
+        if patient_auth0_id == user_id or role == 'Doctor':
             if response.status_code == status.HTTP_200_OK:
                 return Response(data, status=status.HTTP_200_OK)
             else:
@@ -29,7 +33,7 @@ class VisitGatewayViewSet(GenericViewSet):
         else:
             return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    @action(methods=['GET'], detail=False, url_path='doctors/(?P<doctor_id>[\w\-|]+)')
+    @action(methods=['GET'], detail=False, url_path='doctors/(?P<doctor_id>[\w-]+)')
     def get_doctor_visits(self, request, doctor_id=None):
         token = get_token(request)
         token_data = verify_token(token)
@@ -41,7 +45,11 @@ class VisitGatewayViewSet(GenericViewSet):
         response = forward_request_to_service(service_url, token=token, method='get')
         data = response.json()
 
-        if doctor_id == user_id and role == 'Doctor':
+        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{doctor_id}/"
+        response = forward_request_to_service(url=accounts_url, method='get')
+        doctor_auth0_id = response.json().get('auth0_id')
+
+        if doctor_auth0_id == user_id and role == 'Doctor':
             if response.status_code == status.HTTP_200_OK:
                 return Response(data, status=status.HTTP_200_OK)
             else:
@@ -54,13 +62,22 @@ class VisitGatewayViewSet(GenericViewSet):
 
         token_data = verify_token(token)
         user_id = token_data.get(f'{TOKEN_URL}/user_id')
+        doctor_id = request.data.get('doctor_id')
+        patient_id = request.data.get('patient_id')
 
         service_url = f'{VISITS_SERVICE_URL}/visits/{pk}/'
         response = forward_request_to_service(service_url, token=token, method='get')
-
         data = response.json()
 
-        if user_id == data.get('patient_id') or user_id == data.get('doctor_id'):
+        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{doctor_id}/"
+        response = forward_request_to_service(url=accounts_url, method='get')
+        doctor_auth0_id = response.json().get('auth0_id')
+
+        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{patient_id}/"
+        response = forward_request_to_service(url=accounts_url, method='get')
+        patient_auth0_id = response.json().get('auth0_id')
+
+        if user_id == doctor_auth0_id or user_id == patient_auth0_id:
             if response.status_code == status.HTTP_200_OK:
                 return Response(data, status=status.HTTP_200_OK)
             else:

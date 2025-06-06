@@ -3,7 +3,9 @@ import json
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.urls import reverse
-from unittest.mock import patch
+from unittest.mock import patch, Mock
+
+from core.settings import TOKEN_URL
 
 
 class DoctorAvailabilityGatewayViewTests(APITestCase):
@@ -45,8 +47,12 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
             "price": "100.00"
         }
 
+    @patch("api_visits.views.get_token")
+    @patch("api_visits.views.verify_token")
     @patch("api_visits.views.forward_request_to_service")
-    def test_get_user_doctor_availabilities_success(self, mock_forward_request):
+    def test_get_user_doctor_availabilities_success(self, mock_forward_request, mock_verify_token, mock_get_token):
+        mock_get_token.return_value = "valid.jwt.token"
+        mock_verify_token.return_value = {f"{TOKEN_URL}/user_id": 2, f"{TOKEN_URL}/role": "Doctor"}
         mock_forward_request.return_value.status_code = status.HTTP_200_OK
         mock_forward_request.return_value.json.return_value = self.doctor_availability_list_data
 
@@ -56,8 +62,12 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, self.doctor_availability_list_data)
 
+    @patch("api_visits.views.get_token")
+    @patch("api_visits.views.verify_token")
     @patch("api_visits.views.forward_request_to_service")
-    def test_doctor_availability_detail_success(self, mock_forward_request):
+    def test_doctor_availability_detail_success(self, mock_forward_request, mock_verify_token, mock_get_token):
+        mock_get_token.return_value = "valid.jwt.token"
+        mock_verify_token.return_value = {f"{TOKEN_URL}/user_id": 2, f"{TOKEN_URL}/role": "Doctor"}
         mock_forward_request.return_value.status_code = status.HTTP_200_OK
         mock_forward_request.return_value.json.return_value = self.doctor_availability_data
 
@@ -67,19 +77,28 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, self.doctor_availability_data)
 
+    @patch("api_visits.views.get_token")
     @patch("api_visits.views.verify_token")
     @patch("api_visits.views.forward_request_to_service")
-    def test_create_success(self, mock_forward_request, mock_verify_token):
-        mock_verify_token.return_value = {"current_user_id": 2, "current_user_role": "Doctor"}
-        mock_forward_request.return_value.status_code = status.HTTP_201_CREATED
-        mock_forward_request.return_value.json.return_value = self.doctor_availability_data
+    def test_create_success(self, mock_forward_request, mock_verify_token, mock_get_token):
+        mock_get_token.return_value = "valid.jwt.token"
+        mock_verify_token.return_value = {f"{TOKEN_URL}/user_id": 2, f"{TOKEN_URL}/role": "Doctor"}
+
+        mock_user_response = Mock()
+        mock_user_response.json.return_value = {'auth0_id': 2}
+
+        mock_create_response = Mock()
+        mock_create_response.status_code = status.HTTP_201_CREATED
+        mock_create_response.json.return_value = self.doctor_availability_data
+
+        mock_forward_request.side_effect = [mock_user_response, mock_create_response]
 
         response = self.client.post(self.doctor_availability_url, data=json.dumps(self.doctor_availability_data),
                                     content_type="application/json",
                                     HTTP_AUTHORIZATION="Bearer mocktoken")
 
         self.assertEqual(mock_verify_token.call_count, 1)
-        self.assertEqual(mock_forward_request.call_count, 1)
+        self.assertEqual(mock_forward_request.call_count, 2)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data, self.doctor_availability_data)
 
@@ -98,21 +117,27 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['message'], 'Unauthorized access.')
 
+    @patch("api_visits.views.get_token")
     @patch("api_visits.views.verify_token")
     @patch("api_visits.views.forward_request_to_service")
-    def test_doctor_availability_update_success(self, mock_forward_request, mock_verify_token):
+    def test_doctor_availability_update_success(self, mock_forward_request, mock_verify_token, mock_get_token):
         doctor_availability_data_updated = {
             "doctor_id": 2,
             "date": "2024-11-20",
-            "available_hours": {
-                "8": False,
-                "9": False,
-                "10": False
-            },
+            "available_hours": {"8": False, "9": False, "10": False},
             "price": "120.00"
         }
-        mock_verify_token.return_value = {"current_user_id": 2}
-        mock_forward_request.return_value.status_code = status.HTTP_200_OK
+
+        mock_get_token.return_value = "valid.jwt.token"
+        mock_verify_token.return_value = {f'{TOKEN_URL}/user_id': 2}
+
+        mock_user_response = Mock()
+        mock_user_response.json.return_value = {'auth0_id': 2}
+
+        mock_update_response = Mock()
+        mock_update_response.status_code = status.HTTP_200_OK
+
+        mock_forward_request.side_effect = [mock_user_response, mock_update_response]
 
         response = self.client.patch(self.doctor_availability_url_update,
                                      data=json.dumps(doctor_availability_data_updated),
@@ -120,9 +145,9 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
                                      HTTP_AUTHORIZATION="Bearer mocktoken")
 
         self.assertEqual(mock_verify_token.call_count, 1)
-        self.assertEqual(mock_forward_request.call_count, 1)
+        self.assertEqual(mock_forward_request.call_count, 2)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['message'],  'Doctor availabilities updated successfully')
+        self.assertEqual(response.data['message'], 'Doctor availabilities updated successfully')
 
     @patch("api_visits.views.verify_token")
     def test_doctor_availability_update_unauthorized(self, mock_verify_token):
@@ -136,7 +161,7 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
             },
             "price": "120.00"
         }
-        mock_verify_token.return_value = {"current_user_id": 1}
+        mock_verify_token.json.return_value = {"current_user_id": 1}
 
         response = self.client.patch(self.doctor_availability_url_update,
                                      data=json.dumps(doctor_availability_data_updated),
