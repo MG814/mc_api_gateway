@@ -8,7 +8,7 @@ from django.conf import settings
 
 def get_auth0_public_key(token):
     jwks_url = f"https://{settings.AUTH0_DOMAIN}/.well-known/jwks.json"
-    response = requests.get(jwks_url)
+    response = requests.get(jwks_url, timeout=10)
     jwks = response.json()
 
     unverified_header = jwt.get_unverified_header(token)
@@ -55,15 +55,15 @@ def forward_request_to_service(url, data=None, token=None, role=None, method=Non
 
     try:
         if method.lower() == 'get':
-            response = requests.get(url, headers=headers, params=data)
+            response = requests.get(url, headers=headers, params=data, timeout=10)
         elif method.lower() == 'post':
-            response = requests.post(url, json=data, headers=headers)
+            response = requests.post(url, json=data, headers=headers, timeout=10)
         elif method.lower() == 'put':
-            response = requests.put(url, json=data, headers=headers)
+            response = requests.put(url, json=data, headers=headers, timeout=10)
         elif method.lower() == 'patch':
-            response = requests.patch(url, json=data, headers=headers)
+            response = requests.patch(url, json=data, headers=headers, timeout=10)
         elif method.lower() == 'delete':
-            response = requests.delete(url, headers=headers)
+            response = requests.delete(url, headers=headers, timeout=10)
         else:
             return Response({'error': f'Unsupported method {method}'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -92,7 +92,7 @@ def get_management_token():
         "client_secret": settings.AUTH0_CLIENT_SECRET,
         "audience": f"https://{settings.AUTH0_DOMAIN}/api/v2/"
     }
-    response = requests.post(token_url, json=payload)
+    response = requests.post(token_url, json=payload, timeout=10)
     response.raise_for_status()
     data = response.json()
     return data.get("access_token")

@@ -6,14 +6,16 @@ from utils.support_functions import forward_request_to_service
 
 
 class ForwardRequestToServiceTests(TestCase):
+    def setUp(self) -> None:
+        self.test_token = "test_valid_token"
+
     @patch("requests.get")
     def test_request_get_success(self, mock_get):
         mock_get.return_value.status_code = status.HTTP_200_OK
         url = 'testurl'
         data = {'data': 'testtest'}
 
-        token = "valid_token"
-        response = forward_request_to_service(url, data, token, method='get')
+        response = forward_request_to_service(url, data, self.test_token, method='get')
 
         self.assertEqual(mock_get.call_count, 1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -24,8 +26,7 @@ class ForwardRequestToServiceTests(TestCase):
         url = 'testurl'
         data = {'data': 'testtest'}
 
-        token = "valid_token"
-        response = forward_request_to_service(url, data, token, method='post')
+        response = forward_request_to_service(url, data, self.test_token, method='post')
 
         self.assertEqual(mock_post.call_count, 1)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -36,8 +37,7 @@ class ForwardRequestToServiceTests(TestCase):
         url = 'testurl'
         data = {'data': 'testtest'}
 
-        token = "valid_token"
-        response = forward_request_to_service(url, data, token, method='put')
+        response = forward_request_to_service(url, data, self.test_token, method='put')
 
         self.assertEqual(mock_put.call_count, 1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -48,8 +48,7 @@ class ForwardRequestToServiceTests(TestCase):
         url = 'testurl'
         data = {'data': 'testtest'}
 
-        token = "valid_token"
-        response = forward_request_to_service(url, data, token, method='patch')
+        response = forward_request_to_service(url, data, self.test_token, method='patch')
 
         self.assertEqual(mock_patch.call_count, 1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -60,8 +59,7 @@ class ForwardRequestToServiceTests(TestCase):
         url = 'testurl'
         data = {'data': 'testtest'}
 
-        token = "valid_token"
-        response = forward_request_to_service(url, data, token, method='delete')
+        response = forward_request_to_service(url, data, self.test_token, method='delete')
 
         self.assertEqual(mock_delete.call_count, 1)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -70,8 +68,7 @@ class ForwardRequestToServiceTests(TestCase):
         url = 'testurl'
         data = {'data': 'testtest'}
 
-        token = "valid_token"
-        response = forward_request_to_service(url, data, token, method='p')
+        response = forward_request_to_service(url, data, self.test_token, method='p')
 
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(response.data, {'error': f'Unsupported method p'})

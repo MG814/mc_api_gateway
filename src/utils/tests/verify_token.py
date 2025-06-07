@@ -19,7 +19,7 @@ class VerifyTokenTests(TestCase):
             f"{TOKEN_URL}/role": "Doctor"
         }
 
-        test_secret = "test-secret-key"
+        test_secret = "test-secret-key" # nosec B105
         token = jwt.encode(payload, test_secret, algorithm="HS256")
 
         return token
@@ -44,7 +44,7 @@ class VerifyTokenTests(TestCase):
         mock_jwt_decode.assert_called_once()
 
     def test_verify_token_invalid_format(self):
-        invalid_token = "invalid.token"
+        invalid_token = "invalid.token" # nosec B105
 
         with self.assertRaises(Exception) as context:
             verify_token(invalid_token)
