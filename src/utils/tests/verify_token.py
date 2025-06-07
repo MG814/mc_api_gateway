@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import jwt
-from rest_framework import status
 from django.test import TestCase
 
 from core.settings import TOKEN_URL
