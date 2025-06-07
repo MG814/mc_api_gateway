@@ -1,30 +1,53 @@
 from unittest.mock import patch
+
+import jwt
 from rest_framework import status
 from django.test import TestCase
 
+from core.settings import TOKEN_URL
 from utils.support_functions import verify_token
 
 
 class VerifyTokenTests(TestCase):
-    @patch("requests.get")
-    def test_verify_token_success(self, mock_get):
-        mock_get.return_value.status_code = status.HTTP_200_OK
-        mock_get.return_value.json.return_value = {"current_user_id": 1, "current_user_role": "doctor"}
+    def create_valid_jwt_token(self):
+        payload = {
+            "sub": "1234567890",
+            "name": "Test User",
+            "iat": 1516239022,
+            "exp": 9999999999,
+            f"{TOKEN_URL}/user_id": 2,
+            f"{TOKEN_URL}/role": "Doctor"
+        }
 
-        token = "valid_token"
+        test_secret = "test-secret-key"
+        token = jwt.encode(payload, test_secret, algorithm="HS256")
+
+        return token
+
+    @patch("utils.support_functions.jwt.decode")
+    @patch("utils.support_functions.get_auth0_public_key")
+    def test_verify_token_success(self, mock_get_public_key, mock_jwt_decode):
+        token = self.create_valid_jwt_token()
+
+        mock_get_public_key.return_value = "mocked-public-key"
+
+        expected_payload = {
+            f"{TOKEN_URL}/user_id": 2,
+            f"{TOKEN_URL}/role": "Doctor"
+        }
+        mock_jwt_decode.return_value = expected_payload
+
         response = verify_token(token)
 
-        self.assertEqual(mock_get.call_count, 1)
-        self.assertEqual(response, {"current_user_id": 1, "current_user_role": "doctor"})
+        self.assertEqual(response, expected_payload)
+        mock_get_public_key.assert_called_once_with(token)
+        mock_jwt_decode.assert_called_once()
 
+    def test_verify_token_invalid_format(self):
+        invalid_token = "invalid.token"
 
-    @patch("requests.get")
-    def test_verify_token_invalid(self, mock_get):
-        mock_get.return_value.status_code = status.HTTP_401_UNAUTHORIZED
+        with self.assertRaises(Exception) as context:
+            verify_token(invalid_token)
 
-        token = "invalid_token"
-        response = verify_token(token)
+        self.assertIn("Invalid token", str(context.exception))
 
-        self.assertEqual(mock_get.call_count, 1)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data, {'error': 'Token verification failed'})
