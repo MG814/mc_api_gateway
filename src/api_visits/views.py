@@ -197,4 +197,4 @@ class DoctorAvailabilityGatewayViewSet(GenericViewSet):
             else:
                 return Response(response.json(), status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)

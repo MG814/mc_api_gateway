@@ -150,7 +150,8 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
         self.assertEqual(response.data['message'], 'Doctor availabilities updated successfully')
 
     @patch("api_visits.views.verify_token")
-    def test_doctor_availability_update_unauthorized(self, mock_verify_token):
+    @patch("api_visits.views.forward_request_to_service")
+    def test_doctor_availability_update_unauthorized(self, mock_forward_request, mock_verify_token):
         doctor_availability_data_updated = {
             "doctor_id": 2,
             "date": "2024-11-20",
@@ -161,7 +162,8 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
             },
             "price": "120.00"
         }
-        mock_verify_token.json.return_value = {"current_user_id": 1}
+        mock_verify_token.json.return_value = {f'{TOKEN_URL}/user_id': 20}
+        mock_forward_request.return_value.status_code = status.HTTP_401_UNAUTHORIZED
 
         response = self.client.patch(self.doctor_availability_url_update,
                                      data=json.dumps(doctor_availability_data_updated),
@@ -169,5 +171,6 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
                                      HTTP_AUTHORIZATION="Bearer mocktoken")
 
         self.assertEqual(mock_verify_token.call_count, 1)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(mock_forward_request.call_count, 1)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['message'], 'Unauthorized access.')
