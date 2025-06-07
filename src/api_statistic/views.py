@@ -10,7 +10,8 @@ class StatisticGatewayView(APIView):
         try:
             response = requests.post(
                 f"http://web-statistic:8200/graphql/",
-                json=request.data
+                json=request.data,
+                timeout=10
             )
             return Response(response.json(), status=response.status_code)
         except Exception as e:

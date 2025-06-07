@@ -7,7 +7,7 @@ from utils.support_functions import forward_request_to_service
 
 class ForwardRequestToServiceTests(TestCase):
     def setUp(self) -> None:
-        self.test_token = "test_valid_token"
+        self.test_token = "test_valid_token" # nosec B105
 
     @patch("requests.get")
     def test_request_get_success(self, mock_get):
