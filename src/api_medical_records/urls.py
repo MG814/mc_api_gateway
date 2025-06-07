@@ -1,4 +1,3 @@
-from django.urls import path
 from .views import MedicalRecordsGatewayViewSet
 from rest_framework import routers
 

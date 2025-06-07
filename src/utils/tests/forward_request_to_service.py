@@ -71,4 +71,4 @@ class ForwardRequestToServiceTests(TestCase):
         response = forward_request_to_service(url, data, self.test_token, method='p')
 
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        self.assertEqual(response.data, {'error': f'Unsupported method p'})
+        self.assertEqual(response.data, {'error': 'Unsupported method p'})
