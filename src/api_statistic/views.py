@@ -9,7 +9,7 @@ class StatisticGatewayView(APIView):
     def post(self, request):
         try:
             response = requests.post(
-                f"http://web-statistic:8200/graphql/",
+                "http://web-statistic:8200/graphql/",
                 json=request.data,
                 timeout=10
             )
