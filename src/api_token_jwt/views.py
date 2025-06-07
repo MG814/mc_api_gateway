@@ -31,7 +31,7 @@ class CallbackView(APIView):
         }
 
         headers = {"Content-Type": "application/json"}
-        response = requests.post(token_url, json=payload, headers=headers)
+        response = requests.post(token_url, json=payload, headers=headers, timeout=10)
 
         # Obsługa błędów z Auth0
         if response.status_code != status.HTTP_200_OK:
@@ -49,7 +49,7 @@ class CallbackView(APIView):
 
         accounts_get_url = f"http://web-accounts:8100/users/{auth0_user_id}/"
         try:
-            get_response = requests.get(accounts_get_url)
+            get_response = requests.get(accounts_get_url, timeout=10)
             if get_response.status_code == status.HTTP_404_NOT_FOUND:
                 registration = True
             elif get_response.status_code == HTTPStatus.OK:
