@@ -49,7 +49,7 @@ jobs:
         bandit -r src
     - name: Run Ruff
       run: |
-        ruff src
+        ruff check src
     - name: Run Safety
       run: |
         safety check
