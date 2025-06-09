@@ -13,12 +13,25 @@ from utils.support_functions import verify_token, forward_request_to_service
 class CallbackView(APIView):
     permission_classes = [AllowAny]
 
+    def user_not_exist(self, auth0_user_id):
+        accounts_get_url = f"http://web-accounts:8100/users/{auth0_user_id}/"
+        try:
+            get_response = requests.get(accounts_get_url, timeout=10)
+            if get_response.status_code == status.HTTP_404_NOT_FOUND:
+                return True
+            elif get_response.status_code == HTTPStatus.OK:
+                return False
+            else:
+                return False
+        except requests.exceptions.RequestException:
+            return Response({'error': 'Error connecting to microservice accounts'},
+                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
     def get(self, request, *args, **kwargs):
         code = request.GET.get("code")
         if not code:
-            return Response({"error": "Brak kodu autoryzacyjnego"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No authorization code"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Wymiana kodu na token
         token_url = f"https://{settings.AUTH0_DOMAIN}/oauth/token"
         payload = {
             "grant_type": "authorization_code",
@@ -33,11 +46,10 @@ class CallbackView(APIView):
         headers = {"Content-Type": "application/json"}
         response = requests.post(token_url, json=payload, headers=headers, timeout=10)
 
-        # Obsługa błędów z Auth0
         if response.status_code != status.HTTP_200_OK:
             error_data = response.json()
             return Response(
-                {"error": "Nie udało się wymienić kodu na token", "details": error_data},
+                {"error": "Failed to exchange code for token", "details": error_data},
                 status=response.status_code,
             )
 
@@ -46,18 +58,7 @@ class CallbackView(APIView):
 
         token_data = verify_token(access_token)
         auth0_user_id = token_data.get('https://user-info/user_id')
-
-        accounts_get_url = f"http://web-accounts:8100/users/{auth0_user_id}/"
-        try:
-            get_response = requests.get(accounts_get_url, timeout=10)
-            if get_response.status_code == status.HTTP_404_NOT_FOUND:
-                registration = True
-            elif get_response.status_code == HTTPStatus.OK:
-                registration = False
-            else:
-                registration = False
-        except requests.exceptions.RequestException:
-            return Response({'error': 'Błąd połączenia z mikroserwisem accounts'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        registration = self.user_not_exist(auth0_user_id)
 
         if registration:
             user_data = {"user_id": auth0_user_id,
@@ -77,7 +78,6 @@ class CallbackView(APIView):
             return Response(tokens)
         else:
             return Response(
-                {"error": "Auth0 zwróciło nieprawidłowy access_token"},
+                {"error": "Auth0 returned invalid access_token"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-    
