@@ -17,17 +17,19 @@ class MedicalRecordsGatewayViewSet(GenericViewSet):
         user_id = token_data.get(f'{TOKEN_URL}/user_id')
         role = token_data.get(f'{TOKEN_URL}/role')
 
-        service_url = f'{MEDICAL_RECORDS_SERVICE_URL}/patients/{patient_id}/medical-records/'
-        response = forward_request_to_service(service_url, token=token, method='get')
-        data = response.json()
+        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{patient_id}/"
+        response = forward_request_to_service(url=accounts_url, method='get')
 
-        if user_id == patient_id or role == 'Doctor':
+        if user_id == response.json().get('auth0_id') or role == 'Doctor':
+            service_url = f'{MEDICAL_RECORDS_SERVICE_URL}/patients/{patient_id}/medical-records/'
+            response = forward_request_to_service(service_url, token=token, method='get')
+            data = response.json()
             if response.status_code == status.HTTP_200_OK:
                 return Response(data, status=status.HTTP_200_OK)
             else:
                 return Response(data, status=response.status_code)
         else:
-            return Response({'detail': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'detail': 'Unauthorized access.'}, status=status.HTTP_403_FORBIDDEN)
 
     def retrieve(self, request, pk=None):
         token = get_token(request)
@@ -41,12 +43,15 @@ class MedicalRecordsGatewayViewSet(GenericViewSet):
 
         data = response.json()
 
-        if user_id == data.get('patient_id') or role == 'Doctor':
+        accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{response.json().get('patient_id')}/"
+        response = forward_request_to_service(url=accounts_url, method='get')
+
+        if user_id == response.json().get('auth0_id') or role == 'Doctor':
             if response.status_code == status.HTTP_200_OK:
                 return Response(data, status=status.HTTP_200_OK)
             else:
                 return Response(data, status=response.status_code)
-        return Response({'detail': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'detail': 'Unauthorized access.'}, status=status.HTTP_403_FORBIDDEN)
 
     @action(methods=['PATCH'], detail=True, url_path='update')
     def update_medical_records(self, request, pk=None):
@@ -57,16 +62,17 @@ class MedicalRecordsGatewayViewSet(GenericViewSet):
         accounts_url = f"{ACCOUNTS_SERVICE_URL}/users/{request.data.get('doctor_id')}/"
         response = forward_request_to_service(url=accounts_url, method='get')
 
-        service_url = f'{MEDICAL_RECORDS_SERVICE_URL}/{pk}/'
-
         if user_id == response.json().get('auth0_id'):
+            service_url = f'{MEDICAL_RECORDS_SERVICE_URL}/{pk}/'
             response = forward_request_to_service(service_url, data=request.data, token=token, method='patch')
             if response.status_code == status.HTTP_200_OK:
                 return Response({'message': 'Medical records updated successfully'}, status=status.HTTP_200_OK)
             else:
                 return Response(status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': "Unauthorized access. "
+                                        "You do not have access to update this patient's records."},
+                            status=status.HTTP_403_FORBIDDEN)
 
     def create(self, request):
         token = get_token(request)
