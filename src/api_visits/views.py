@@ -31,7 +31,8 @@ class VisitGatewayViewSet(GenericViewSet):
             else:
                 return Response(data, status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'message': "Unauthorized access. You do not have access to preview this visits."},
+                            status=status.HTTP_403_FORBIDDEN)
 
     @action(methods=['GET'], detail=False, url_path='doctors/(?P<doctor_id>[\w-]+)')
     def get_doctor_visits(self, request, doctor_id=None):
@@ -55,7 +56,8 @@ class VisitGatewayViewSet(GenericViewSet):
             else:
                 return Response(data, status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'message': "Unauthorized access. You do not have access to preview this visits."},
+                            status=status.HTTP_403_FORBIDDEN)
 
     def retrieve(self, request, pk=None):
         token = get_token(request)
@@ -83,7 +85,8 @@ class VisitGatewayViewSet(GenericViewSet):
             else:
                 return Response(status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'message': "Unauthorized access. You do not have access to preview this visit."},
+                            status=status.HTTP_403_FORBIDDEN)
 
     def create(self, request, *args, **kwargs):
         token = get_token(request)
@@ -177,7 +180,9 @@ class DoctorAvailabilityGatewayViewSet(GenericViewSet):
             else:
                 return Response(response.json(), status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': "Unauthorized access. "
+                                        "Trying to create doctor availability for another user."},
+                            status=status.HTTP_403_FORBIDDEN)
 
     @action(methods=['PATCH'], detail=True, url_path='update-availabilities')
     def update_availabilities(self, request, pk=None):
@@ -197,4 +202,5 @@ class DoctorAvailabilityGatewayViewSet(GenericViewSet):
             else:
                 return Response(response.json(), status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'message': "Unauthorized access. You are trying to update another user's data."},
+                            status=status.HTTP_403_FORBIDDEN)

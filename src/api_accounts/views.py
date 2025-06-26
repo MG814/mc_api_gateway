@@ -57,7 +57,8 @@ class UpdateUserGatewayView(GenericViewSet):
             response = forward_request_to_service(url=accounts_url, data=request.data, method='patch')
             return Response(response.json(), status=response.status_code)
         else:
-            return Response({'message': 'Unauthorized access.'}, status=status.HTTP_401_UNAUTHORIZED) #poprawić message
+            return Response({'message': "Unauthorized access. You are trying to update another user's data."},
+                            status=status.HTTP_403_FORBIDDEN)
 
 
 class UserGatewayView(GenericViewSet):
