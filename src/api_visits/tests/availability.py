@@ -115,7 +115,8 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
         self.assertEqual(mock_verify_token.call_count, 1)
         self.assertEqual(mock_forward_request.call_count, 1)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data['message'], 'Unauthorized access.')
+        self.assertEqual(response.data['message'], "Unauthorized access. "
+                                                   "Trying to create doctor availability for another user.")
 
     @patch("api_visits.views.get_token")
     @patch("api_visits.views.verify_token")
@@ -172,5 +173,6 @@ class DoctorAvailabilityGatewayViewTests(APITestCase):
 
         self.assertEqual(mock_verify_token.call_count, 1)
         self.assertEqual(mock_forward_request.call_count, 1)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['message'], 'Unauthorized access.')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['message'], "Unauthorized access. "
+                                                   "You are trying to update another user's data.")
