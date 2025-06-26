@@ -88,7 +88,7 @@ class VisitsGatewayViewTests(APITestCase):
         mock_verify_token.return_value = {f"{TOKEN_URL}/user_id": "auth0|test_user_123"}
 
         visit_response = Mock()
-        visit_response.status_code = status.HTTP_401_UNAUTHORIZED
+        visit_response.status_code = status.HTTP_403_FORBIDDEN
 
         patient_response = Mock()
         patient_response.status_code = status.HTTP_200_OK
@@ -100,8 +100,9 @@ class VisitsGatewayViewTests(APITestCase):
                                    HTTP_AUTHORIZATION="Bearer mocktoken")
 
         self.assertEqual(mock_forward_request.call_count, 2)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['message'], 'Unauthorized access.')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['message'], "Unauthorized access. "
+                                                   "You do not have access to preview this visits.")
 
     @patch("api_visits.views.verify_token")
     @patch("api_visits.views.forward_request_to_service")
@@ -152,13 +153,14 @@ class VisitsGatewayViewTests(APITestCase):
     @patch("api_visits.views.forward_request_to_service")
     def test_get_doctor_visits_unauthorized(self, mock_forward_request, mock_verify_token):
         mock_verify_token.return_value = {f"{TOKEN_URL}/user_id": 2, f"{TOKEN_URL}/role": "Doctor"}
-        mock_forward_request.return_value.status_code = status.HTTP_401_UNAUTHORIZED
+        mock_forward_request.return_value.status_code = status.HTTP_403_FORBIDDEN
 
         response = self.client.get(self.visit_url_get_doctor, HTTP_AUTHORIZATION="Bearer mocktoken")
 
         self.assertEqual(mock_forward_request.call_count, 2)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['message'], 'Unauthorized access.')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['message'], "Unauthorized access. "
+                                                   "You do not have access to preview this visits.")
 
     @patch("api_visits.views.verify_token")
     @patch("api_visits.views.forward_request_to_service")
@@ -192,7 +194,7 @@ class VisitsGatewayViewTests(APITestCase):
         mock_verify_token.return_value = {f"{TOKEN_URL}/user_id": "auth0|test_user_123"}
 
         visit_response = Mock()
-        visit_response.status_code = status.HTTP_401_UNAUTHORIZED
+        visit_response.status_code = status.HTTP_403_FORBIDDEN
 
         doctor_response = Mock()
         doctor_response.status_code = status.HTTP_200_OK
@@ -208,8 +210,9 @@ class VisitsGatewayViewTests(APITestCase):
 
         self.assertEqual(mock_verify_token.call_count, 1)
         self.assertEqual(mock_forward_request.call_count, 3)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['message'], 'Unauthorized access.')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['message'], 'Unauthorized access. '
+                                                   'You do not have access to preview this visit.')
 
     @patch("api_visits.views.verify_token")
     @patch("api_visits.views.forward_request_to_service")
