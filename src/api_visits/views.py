@@ -98,7 +98,8 @@ class VisitGatewayViewSet(GenericViewSet):
         response = forward_request_to_service(service_url, request.data, token, role=current_user_role, method='post')
 
         if response.status_code == status.HTTP_201_CREATED:
-            payment_data = {'price': request.data.get('price'), 'name': request.data.get('title'),
+            payment_data = {'doctor_id': request.data.get('doctor_id'), 'patient_id': request.data.get('patient_id'),
+                            'price': request.data.get('price'), 'name': request.data.get('title'),
                             'visit_id': response.json()['id']}
             stripe_url = f'{PAYMENTS_SERVICE_URL}/create-checkout-session/'
             stripe_response = forward_request_to_service(stripe_url, data=payment_data, token=token, method='post')
